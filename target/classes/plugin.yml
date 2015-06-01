@@ -1,0 +1,13 @@
+name: Batman
+main: com.xxyrana.batman.Batman
+version: 0.1
+commands:
+   test:
+      description: Tests
+      usage: /<command>
+      permission: batman.be
+      permission-message: You don't have <permission>
+permissions:
+    batman.be:
+        description: Allows players to be Batman
+        default: op
