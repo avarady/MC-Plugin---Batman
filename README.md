@@ -8,6 +8,7 @@ To Do | Status
 :---|:---
 Recognize Bat armor | Done! All black leather armor + skull of redrocketjj (specific to my server) - will add config for this later.
 Keep track of each player's "Batman status" | Done!
+Add "Batman buffs" | Done!
 Snowballs deal damage | Not started
 Fishing rods become grappling hooks | Not started
 Bats spawn as your allies | Not started
