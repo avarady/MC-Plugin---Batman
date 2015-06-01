@@ -16,6 +16,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * 
@@ -24,6 +27,11 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class Batman extends JavaPlugin implements Listener {
 	private static final Logger log = Logger.getLogger("Minecraft");
+	private PotionEffectType[] buffs = {PotionEffectType.INCREASE_DAMAGE,
+			PotionEffectType.JUMP,
+			PotionEffectType.REGENERATION,
+			PotionEffectType.SPEED,
+			PotionEffectType.DAMAGE_RESISTANCE};
 
 	@Override
 	public void onEnable() {
@@ -61,8 +69,18 @@ public class Batman extends JavaPlugin implements Listener {
 		Player p =(Player) event.getPlayer();
 		if(isBatman(p)){
 			this.getConfig().set(p.getName().toLowerCase(), true);
+			//Add buffs
+			for(int i=0; i<buffs.length; i++){
+				p.addPotionEffect(buffs[i].createEffect(1200000, 0));
+			}
 		} else {
 			this.getConfig().set(p.getName().toLowerCase(), false);
+			//Remove buffs
+			for(int i=0; i<buffs.length; i++){
+				if(p.hasPotionEffect(buffs[i])){
+					p.removePotionEffect(buffs[i]);
+				}
+			}
 		}
 		
 		//TODO: Buffs
