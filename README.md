@@ -10,8 +10,8 @@ Recognize Bat armor | Done! All black leather armor + skull of redrocketjj (spec
 Keep track of each player's "Batman status" | Done!
 Add "Batman buffs" | Done!
 Snowballs deal damage | Done!
-Fishing rods become grappling hooks | Done, mostly. Does a weird thing with the fishing rod, like when ClearLag takes the hook - you have to click to reset and then click again to use it again. Looking into fixing this.
+Fishing rods become grappling hooks | Functional. Does a weird thing with the fishing rod, like when ClearLag takes the hook - you have to click to reset and then click again to use it again. Looking into fixing this. It does work though, as is.
 Bats spawn as your allies | Not started
-Punches do extra damage and have a chance to stun | Done, mostly. Stun is super slowness, so players can still look around and interact. Possibly will change this later.
+Punches do extra damage and have a chance to stun | Partially done. Stun is super slowness, so players can still look around and interact. Possibly will change this later.
 Swords are weaker | Not started
 Armor is unbreakable | Done! Armor glows with the enchantment, so will look into removing this for aesthetic purposes.
