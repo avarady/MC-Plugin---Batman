@@ -2,23 +2,26 @@ package com.xxyrana.batman;
 
 import java.util.logging.Logger;
 
-import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * 
@@ -42,26 +45,66 @@ public class Batman extends JavaPlugin implements Listener {
 	public void onDisable() {
 		log.info(String.format("[%s] Disabled Version %s", getDescription().getName(), getDescription().getVersion()));
 	}
-	
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("test")) { // If the player typed /basic then do the following...
+		if (cmd.getName().equalsIgnoreCase("test")){
 			if(sender instanceof Player){
-				System.out.println(this.getConfig().getBoolean(((Player) sender).getName().toLowerCase(), true));
+				System.out.println(this.getConfig().getBoolean(((Player) sender).getName().toLowerCase(), false));
 			}
 		}
 		return false; 
 	}
-	
-	//TODO: Snowball throw event (5 dmg), fishing rod throw event (grappling hook)
-	
+
 	//TODO: Bat spawning (every 5-10 mins)
-	
-	//TODO: On punch (7 dmg + 5% chance to stun)
-	
 	//TODO: On sword hit (20% weaker)
-	
-	
+
+	@SuppressWarnings("deprecation")
+	//Snowballs do 5 damage if the thrower is Batman
+	//Batman's punches do 7 damage and have a 5% chance to stun
+	@EventHandler
+	public void onEntityDamgeByEntity(EntityDamageByEntityEvent event){
+		Entity attacker = event.getDamager();
+		//Snowball handler
+		if(attacker instanceof Snowball){
+			Snowball snowball = (Snowball) event.getDamager();
+			Player shooter = (Player) snowball.getShooter();
+			if(this.getConfig().getBoolean(shooter.getName().toLowerCase(), false)){
+				event.setDamage(5);
+			}
+		} else if(attacker instanceof Player){
+			Player damager = (Player) event.getDamager();
+			ItemStack holding = damager.getItemInHand();
+			if(this.getConfig().getBoolean(damager.getName().toLowerCase(), false)){
+				//Punch handler
+				if(holding.getTypeId() == 0){
+					event.setDamage(7);
+					double random = Math.random();
+					if(random<0.05){
+						Player hit = (Player) event.getEntity();
+						PotionEffect effect = new PotionEffect(PotionEffectType.SLOW, 100, 10000000);
+						hit.addPotionEffect(effect);
+						hit.sendMessage("You have been stunned!");
+					}
+				}
+				//TODO: Add sword handling
+			}
+		}
+	}
+
+	//Fishing rods act as grappling hooks
+	@EventHandler
+	public void onProjectileHit(ProjectileHitEvent event){
+		if(event.getEntityType().equals(EntityType.FISHING_HOOK)){
+			Player shooter = (Player) event.getEntity().getShooter();
+			if(this.getConfig().getBoolean(shooter.getName().toLowerCase(), false)){
+				Location tp = event.getEntity().getLocation();
+				shooter.teleport(tp);
+				event.getEntity().remove();
+			}
+		}
+	}	
+
 	//Updates Batman status in config whenever inventory is closed
 	//Updates buffs accordingly and makes armor set unbreakable
 	@EventHandler
@@ -82,12 +125,8 @@ public class Batman extends JavaPlugin implements Listener {
 				}
 			}
 		}
-		
-		//TODO: Buffs
-		
-		//TODO: Unbreakable
 	}
-	
+
 	//Checks outfit to see if player is Batman
 	boolean isBatman(Player p){
 		//Get outfit
@@ -109,9 +148,14 @@ public class Batman extends JavaPlugin implements Listener {
 				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 1644825
 				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 1644825
 				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 1644825){
+			//Make (essentially) unbreakable
+			h.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+			c.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+			l.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+			b.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
 			return true;
 		}
 		return false;
 	}
-	
+
 }
