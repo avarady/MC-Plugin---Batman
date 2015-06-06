@@ -2,7 +2,6 @@
 This is nowhere near finished, so don't even bother trying to download it yet.
 
 ##Progress
-Don't judge me... I just started work earlier this evening...
 
 To Do | Status
 :---|:---
