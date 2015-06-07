@@ -13,6 +13,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Bat;
+import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -24,6 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -40,18 +42,20 @@ import org.bukkit.util.Vector;
  */
 public class Batman extends JavaPlugin implements Listener {
 	private static final Logger log = Logger.getLogger("Minecraft");
-	private PotionEffectType[] batBuffs = {PotionEffectType.INCREASE_DAMAGE,
-			PotionEffectType.JUMP,
-			PotionEffectType.REGENERATION,
-			PotionEffectType.SPEED,
-			PotionEffectType.DAMAGE_RESISTANCE};
-	//TODO: Change buffs
-	private PotionEffectType[] nightBuffs = {PotionEffectType.JUMP,
-			PotionEffectType.REGENERATION,
-			PotionEffectType.SPEED,
-			PotionEffectType.DAMAGE_RESISTANCE};
-
-	HashMap<Entity, Player> map;
+	private PotionEffect[] batBuffs = {
+			PotionEffectType.INCREASE_DAMAGE.createEffect(1200000, 0),
+			PotionEffectType.JUMP.createEffect(1200000, 2),
+			PotionEffectType.REGENERATION.createEffect(1200000, 0),
+			PotionEffectType.SPEED.createEffect(1200000, 2),
+			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0),
+			PotionEffectType.NIGHT_VISION.createEffect(1200000, 0)
+			};
+	private PotionEffect[] nightBuffs = {
+			PotionEffectType.JUMP.createEffect(1200000, 2),
+			PotionEffectType.REGENERATION.createEffect(1200000, 0),
+			PotionEffectType.SPEED.createEffect(1200000, 2),
+			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0)
+			};
 
 	@Override
 	public void onEnable() {
@@ -76,7 +80,7 @@ public class Batman extends JavaPlugin implements Listener {
 					}
 				}
 			}
-		}, 0L, 12000L);
+		}, 0L, 12000L); //end scheduler
 	}
 
 	@Override
@@ -89,8 +93,6 @@ public class Batman extends JavaPlugin implements Listener {
 
 	//Snowballs do 5 damage if the thrower is Batman
 	//Batman's punches do 7 damage and have a 5% chance to stun
-	//TODO: Night + blaze rod = 9 damage
-	//TODO: Night + eggs = 5 damage
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event){
 		Entity attacker = event.getDamager();
@@ -110,6 +112,7 @@ public class Batman extends JavaPlugin implements Listener {
 				event.setDamage(5);
 			}
 		} else if(attacker instanceof Player){
+			//Attacker is Batman
 			if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
 				Player damager = (Player) event.getDamager();
 				ItemStack holding = damager.getItemInHand();
@@ -143,32 +146,36 @@ public class Batman extends JavaPlugin implements Listener {
 					}
 					event.setDamage(damage);
 				}
-				//Nightwing
-			} else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("nightwing")){
+			
+			} //end attacker is Batman
+			//Attacker is Nightwing
+			else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("nightwing")){
 				Player damager = (Player) event.getDamager();
 				ItemStack holding = damager.getItemInHand();
 				Material inhand = holding.getType();
 				if(inhand.equals(Material.BLAZE_ROD)){
 					event.setDamage(9);
 				}
-			}
+			} //end attacker is Nightwing
 
-			//Makes bats attack
+			//Batman has taken damage
 			Entity damaged = event.getEntity();
 			if(damaged instanceof Player
 					&& getConfig().getString(((Player) damaged).getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
 				List<Entity> nearby = damaged.getNearbyEntities(15, 15, 15);
+				//Find all bats nearby
 				for(Entity e : nearby){
 					if(e instanceof Bat){
-						//Move closer
+						//Move bats to attacker
 						Location bloc = e.getLocation();
 						Location ploc = attacker.getLocation();
 						Vector delta = ploc.toVector().subtract(bloc.toVector());
 						e.setVelocity(delta);
-						//TODO: Damage				
+						//Damage the attacker
+						((Damageable) attacker).damage(1);
 					}
 				}
-			}
+			} //end Batman has taken damage
 
 		}
 
@@ -198,39 +205,39 @@ public class Batman extends JavaPlugin implements Listener {
 			getConfig().saveToString();
 			//Remove buffs
 			for(int i=0; i<nightBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i])){
-					p.removePotionEffect(batBuffs[i]);
+				if(p.hasPotionEffect(batBuffs[i].getType())){
+					p.removePotionEffect(batBuffs[i].getType());
 				}
 			}
 			//Add buffs
 			for(int i=0; i<batBuffs.length; i++){
-				p.addPotionEffect(batBuffs[i].createEffect(1200000, 0));
+				p.addPotionEffect(batBuffs[i]);
 			}
 		} else if(isNightwing(p)){
 			getConfig().set(p.getName().toLowerCase(), "nightwing");
 			getConfig().saveToString();
 			//Remove buffs
 			for(int i=0; i<batBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i])){
-					p.removePotionEffect(batBuffs[i]);
+				if(p.hasPotionEffect(batBuffs[i].getType())){
+					p.removePotionEffect(batBuffs[i].getType());
 				}
 			}
 			//Add buffs
 			for(int i=0; i<nightBuffs.length; i++){
-				p.addPotionEffect(nightBuffs[i].createEffect(1200000, 0));
+				p.addPotionEffect(nightBuffs[i]);
 			}
 		} else {
 			getConfig().set(p.getName().toLowerCase(), "none");
 			getConfig().saveToString();
 			//Remove buffs
 			for(int i=0; i<batBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i])){
-					p.removePotionEffect(batBuffs[i]);
+				if(p.hasPotionEffect(batBuffs[i].getType())){
+					p.removePotionEffect(batBuffs[i].getType());
 				}
 			}
 			for(int i=0; i<nightBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i])){
-					p.removePotionEffect(batBuffs[i]);
+				if(p.hasPotionEffect(batBuffs[i].getType())){
+					p.removePotionEffect(batBuffs[i].getType());
 				}
 			}
 		}
