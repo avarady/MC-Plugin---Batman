@@ -64,3 +64,4 @@ Item | Notes
 Fishing rods become grappling hooks | Functional, using teleport. Want to animate it in the future.
 Punches do extra damage and have a chance to stun (Batman) | Partially done. Stun is super slowness, so players can still look around and interact. Possibly will change this later.
 Ability to climb walls | Postponed - this will take a while.
+Ability to glide (Batman) | Not started.
