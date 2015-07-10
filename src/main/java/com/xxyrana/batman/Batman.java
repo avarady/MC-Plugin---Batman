@@ -44,13 +44,33 @@ public class Batman extends JavaPlugin implements Listener {
 			PotionEffectType.SPEED.createEffect(1200000, 2),
 			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0),
 			PotionEffectType.NIGHT_VISION.createEffect(1200000, 0)
-			};
+	};
 	private PotionEffect[] nightBuffs = {
 			PotionEffectType.JUMP.createEffect(1200000, 2),
 			PotionEffectType.REGENERATION.createEffect(1200000, 0),
 			PotionEffectType.SPEED.createEffect(1200000, 2),
 			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0)
-			};
+	};
+	private PotionEffect[] superBuffs = {
+			PotionEffectType.INCREASE_DAMAGE.createEffect(1200000, 1),
+			PotionEffectType.JUMP.createEffect(1200000, 2),
+			PotionEffectType.REGENERATION.createEffect(1200000, 1),
+			PotionEffectType.SPEED.createEffect(1200000, 3),
+			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0)
+	};
+	private PotionEffect[] greenBuffs = {
+			PotionEffectType.INCREASE_DAMAGE.createEffect(1200000, 0),
+			PotionEffectType.JUMP.createEffect(1200000, 3),
+			PotionEffectType.REGENERATION.createEffect(1200000, 0),
+			PotionEffectType.SPEED.createEffect(1200000, 0),
+			PotionEffectType.DAMAGE_RESISTANCE.createEffect(1200000, 0)
+	};
+	private PotionEffect[] jokerBuffs = {
+			PotionEffectType.INCREASE_DAMAGE.createEffect(1200000, 0),
+			PotionEffectType.JUMP.createEffect(1200000, 3),
+			PotionEffectType.REGENERATION.createEffect(1200000, 1),
+			PotionEffectType.SPEED.createEffect(1200000, 3),
+	};
 
 	@Override
 	public void onEnable() {
@@ -85,14 +105,29 @@ public class Batman extends JavaPlugin implements Listener {
 	}
 
 	//TODO: Night and Bat can climb walls
+	//TODO: Superman flying
+	//TODO: Green Lantern can fly while holding emeralds
+	//TODO: Green Lantern has 5 more blocks of attack range
+	//TODO: Green Lantern has weakness 2 when low on health (2 hearts)
+	//TODO: Kryptonite - Nearby = slow 50, blind 50, weak 10, poison 3; in inventory = death
 
-	//Snowballs do 5 damage if the thrower is Batman
-	//Batman's punches do 7 damage and have a 5% chance to stun
+
+	//-------------------//
+	//-------------------//
+	//                   //
+	//   DAMAGE EVENTS   //
+	//                   //
+	//-------------------//
+	//-------------------//
+
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event){
 		Entity attacker = event.getDamager();
-		//Snowball handler
-		if(attacker instanceof Snowball){
+		if(attacker instanceof Snowball){ //Snowball has been thrown
+			//---------------------------//
+			//   WEAPONIZED: SNOWBALLS   //
+			//---------------------------//
+			//Snowballs do 5 damage if the thrower is Batman
 			Snowball snowball = (Snowball) event.getDamager();
 			Player shooter = (Player) snowball.getShooter();
 			if(getConfig().getString(shooter.getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
@@ -100,18 +135,28 @@ public class Batman extends JavaPlugin implements Listener {
 			} else {
 				event.setCancelled(true);
 			}
-		} else if(attacker instanceof Egg){
+		} else if(attacker instanceof Egg){ //Egg has been thrown
+			//----------------------//
+			//   WEAPONIZED: EGGS   //
+			//----------------------//
+			//Eggs do 5 damage if the thrower is Nightwing
 			Egg egg = (Egg) event.getDamager();
 			Player shooter = (Player) egg.getShooter();
 			if(getConfig().getString(shooter.getName().toLowerCase(), "none").equalsIgnoreCase("nightwing")){
 				event.setDamage(5);
 			}
 		} else if(attacker instanceof Player){
+
+			//----------------------//
+			//   ATTACKER: BATMAN   //
+			//----------------------//
 			//Attacker is Batman
+			//TODO: Batman attacking Superman = +20% damage
 			if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
 				Player damager = (Player) event.getDamager();
 				ItemStack holding = damager.getItemInHand();
 				//Punch handler
+				//Batman's punches do 7 damage and have a 5% chance to stun
 				if(holding.getTypeId() == 0){
 					event.setDamage(7);
 					if(event.getEntity() instanceof Player){
@@ -140,9 +185,12 @@ public class Batman extends JavaPlugin implements Listener {
 						return;
 					}
 					event.setDamage(damage);
-				}
-			
+				} //end sword handler
 			} //end attacker is Batman
+
+			//-------------------------//
+			//   ATTACKER: NIGHTWING   //
+			//-------------------------//
 			//Attacker is Nightwing
 			else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("nightwing")){
 				Player damager = (Player) event.getDamager();
@@ -153,30 +201,105 @@ public class Batman extends JavaPlugin implements Listener {
 				}
 			} //end attacker is Nightwing
 
-			//Batman has taken damage
-			Entity damaged = event.getEntity();
-			if(damaged instanceof Player
-					&& getConfig().getString(((Player) damaged).getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
-				List<Entity> nearby = damaged.getNearbyEntities(15, 15, 15);
-				//Find all bats nearby
-				for(Entity e : nearby){
-					if(e instanceof Bat){
-						//Move bats to attacker
-						Location bloc = e.getLocation();
-						Location ploc = attacker.getLocation();
-						Vector delta = ploc.toVector().subtract(bloc.toVector());
-						e.setVelocity(delta);
-						//Damage the attacker
-						((Damageable) attacker).damage(1);
-					}
-				}
-			} //end Batman has taken damage
+			//------------------------//
+			//   ATTACKER: SUPERMAN   //
+			//------------------------//
+			//Attacker is Superman
+			else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("superman")){
+				Player damager = (Player) event.getDamager();
+				ItemStack holding = damager.getItemInHand();
+				Material inhand = holding.getType();
+				//TODO: Superman can explode things 20 blocks away but takes away 2 hearts (heat vision)
+				//TODO: Superman - each hit slows mobs
+				//TODO: All weapons 60% weaker
+			} //end attacker is Superman
 
+			//-----------------------------//
+			//   ATTACKER: GREEN LANTERN   //
+			//-----------------------------//
+			//Attacker is Green Lantern
+			else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("greenlantern")){
+				Player damager = (Player) event.getDamager();
+				ItemStack holding = damager.getItemInHand();
+				Material inhand = holding.getType();
+				//TODO: Green lantern can shoot green particles from emeralds (consuming them) to do 7 damage
+			} //end attacker is Green Lantern
+
+			//-------------------------//
+			//   ATTACKER: THE JOKER   //
+			//-------------------------//
+			//Attacker is The Joker
+			else if(getConfig().getString(((Player) event.getDamager()).getName().toLowerCase(), "none").equalsIgnoreCase("thejoker")){
+				Player damager = (Player) event.getDamager();
+				ItemStack holding = damager.getItemInHand();
+				Material inhand = holding.getType();
+				//TODO: All weapons do 60% more damage
+				//TODO: Guns in Downtown do 20% more damage
+				//TODO: Fists do 5 damage
+				//TODO: Attacking something gives speed 3 for 5 seconds
+			} //end attacker is The Joker
+
+			Entity damaged = event.getEntity();
+			if(damaged instanceof Player){
+				
+				//---------------------//
+				//   DAMAGED: BATMAN   //
+				//---------------------//
+				//Batman has taken damage
+				if(getConfig().getString(((Player) damaged).getName().toLowerCase(), "none").equalsIgnoreCase("batman")){
+					List<Entity> nearby = damaged.getNearbyEntities(15, 15, 15);
+					//Find all bats nearby
+					for(Entity e : nearby){
+						if(e instanceof Bat){
+							//Move bats to attacker
+							Location bloc = e.getLocation();
+							Location ploc = attacker.getLocation();
+							Vector delta = ploc.toVector().subtract(bloc.toVector());
+							e.setVelocity(delta);
+							//Damage the attacker
+							((Damageable) attacker).damage(1);
+						}
+					}
+				} //end Batman has taken damage
+				
+				//------------------------//
+				//   DAMAGED: THE JOKER   //
+				//------------------------//
+				//The Joker has taken damage
+				if(getConfig().getString(((Player) damaged).getName().toLowerCase(), "none").equalsIgnoreCase("thejoker")){
+					//TODO: Check to make sure the damage was > 5 times in a row
+					//TODO: Spawn in 3 Zombies and 3 Skeletons as The Joker's henchmen
+					List<Entity> nearby = damaged.getNearbyEntities(15, 15, 15);
+					//Find all bats nearby
+					for(Entity e : nearby){
+						if(e instanceof Bat){
+							//Move bats to attacker
+							Location bloc = e.getLocation();
+							Location ploc = attacker.getLocation();
+							Vector delta = ploc.toVector().subtract(bloc.toVector());
+							e.setVelocity(delta);
+							//Damage the attacker
+							((Damageable) attacker).damage(1);
+						}
+					}
+				} //end The Joker has taken damage
+				
+			}
 		}
 
 	}
 
+
+	//----------------------//
+	//----------------------//
+	//                      //
+	//   MISC HERO EVENTS   //
+	//                      //
+	//----------------------//
+	//----------------------//
+
 	//Fishing rods act as grappling hooks
+	//Applies to: Batman, Nightwing
 	@EventHandler
 	public void onProjectileHit(ProjectileHitEvent event){
 		if(event.getEntityType().equals(EntityType.FISHING_HOOK)){
@@ -190,112 +313,212 @@ public class Batman extends JavaPlugin implements Listener {
 		}
 	}	
 
-	//Updates Batman status in config whenever inventory is closed
+
+	//-------------------------//
+	//-------------------------//
+	//                         //
+	//   HERO UPDATING EVENT   //
+	//                         //
+	//-------------------------//
+	//-------------------------//
+
+	//Updates hero status in config whenever inventory is closed
 	//Updates buffs accordingly and makes armor set unbreakable
 	@EventHandler
 	public void onInventoryClose(InventoryCloseEvent event){
 		Player p =(Player) event.getPlayer();
-		if(isBatman(p)){
+		//Get outfit
+		PlayerInventory inv = p.getInventory();
+		ItemStack h = inv.getHelmet();
+		ItemStack c = inv.getChestplate();
+		ItemStack l = inv.getLeggings();
+		ItemStack b = inv.getBoots();
+
+		//Initial check to save time
+		if (h == null || c == null || l == null || b == null){
+			//Remove hero buffs
+			if(!getConfig().getString(p.getName().toLowerCase()).equalsIgnoreCase("none")){
+				//Remove buffs
+				for (PotionEffect effect : p.getActivePotionEffects()){
+					p.removePotionEffect(effect.getType());
+				}
+			}
+			getConfig().set(p.getName().toLowerCase(), "none");
+			getConfig().saveToString();
+			//Remove buffs
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
+			}
+			saveConfig();
+			return;
+		}
+
+		//Hero checks
+		if(isBatman(h, c, l, b)){
 			getConfig().set(p.getName().toLowerCase(), "batman");
 			getConfig().saveToString();
 			//Remove buffs
-			for(int i=0; i<nightBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i].getType())){
-					p.removePotionEffect(batBuffs[i].getType());
-				}
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
 			}
 			//Add buffs
 			for(int i=0; i<batBuffs.length; i++){
 				p.addPotionEffect(batBuffs[i]);
 			}
-		} else if(isNightwing(p)){
+		} else if(isNightwing(h, c, l, b)){
 			getConfig().set(p.getName().toLowerCase(), "nightwing");
 			getConfig().saveToString();
 			//Remove buffs
-			for(int i=0; i<batBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i].getType())){
-					p.removePotionEffect(batBuffs[i].getType());
-				}
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
 			}
 			//Add buffs
 			for(int i=0; i<nightBuffs.length; i++){
 				p.addPotionEffect(nightBuffs[i]);
 			}
-		} else {
-			getConfig().set(p.getName().toLowerCase(), "none");
+		} else if(isSuperman(h, c, l, b)){
+			getConfig().set(p.getName().toLowerCase(), "superman");
 			getConfig().saveToString();
 			//Remove buffs
-			for(int i=0; i<batBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i].getType())){
-					p.removePotionEffect(batBuffs[i].getType());
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
+			}
+			//Add buffs
+			for(int i=0; i<superBuffs.length; i++){
+				p.addPotionEffect(superBuffs[i]);
+			}
+		} else if(isGreenlantern(h, c, l, b)){
+			getConfig().set(p.getName().toLowerCase(), "greenlantern");
+			getConfig().saveToString();
+			//Remove buffs
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
+			}
+			//Add buffs
+			for(int i=0; i<greenBuffs.length; i++){
+				p.addPotionEffect(greenBuffs[i]);
+			}
+		} else if(isThejoker(h, c, l, b)){
+			getConfig().set(p.getName().toLowerCase(), "thejoker");
+			getConfig().saveToString();
+			//Remove buffs
+			for (PotionEffect effect : p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
+			}
+			//Add buffs
+			for(int i=0; i<jokerBuffs.length; i++){
+				p.addPotionEffect(jokerBuffs[i]);
+			}
+		} else {
+			//Remove hero buffs
+			if(!getConfig().getString(p.getName().toLowerCase()).equalsIgnoreCase("none")){
+				//Remove buffs
+				for (PotionEffect effect : p.getActivePotionEffects()){
+					p.removePotionEffect(effect.getType());
 				}
 			}
-			for(int i=0; i<nightBuffs.length; i++){
-				if(p.hasPotionEffect(batBuffs[i].getType())){
-					p.removePotionEffect(batBuffs[i].getType());
-				}
-			}
+			getConfig().set(p.getName().toLowerCase(), "none");
+			getConfig().saveToString();
+			saveConfig();
+			return;
 		}
 		saveConfig();
+		//Make armor (essentially) unbreakable
+		h.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+		c.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+		l.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+		b.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
 	}
 
-	//Checks outfit to see if player is Batman
-	boolean isBatman(Player p){
-		//Get outfit
-		PlayerInventory inv = p.getInventory();
-		ItemStack h = inv.getHelmet();
-		ItemStack c = inv.getChestplate();
-		ItemStack l = inv.getLeggings();
-		ItemStack b = inv.getBoots();
-		if (h == null || c == null || l == null || b == null){
-			return false;
-		}
 
-		//Check outfit
+	//-------------------//
+	//-------------------//
+	//                   //
+	//   OUTFIT CHECKS   //
+	//                   //
+	//-------------------//
+	//-------------------//
+
+	//--------------------//
+	//   OUTFIT: BATMAN   //
+	//--------------------//
+	boolean isBatman(ItemStack h, ItemStack c, ItemStack l, ItemStack b){
 		if(h.getType().equals(Material.SKULL_ITEM)
 				&& h.getItemMeta().getDisplayName().substring(11).equalsIgnoreCase("redrocketjj")
 				&& c.getType().equals(Material.LEATHER_CHESTPLATE)
 				&& l.getType().equals(Material.LEATHER_LEGGINGS)
 				&& b.getType().equals(Material.LEATHER_BOOTS)
-				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 1644825
+				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 1644825 //ink sac
 				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 1644825
 				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 1644825){
-			//Make (essentially) unbreakable
-			h.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			c.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			l.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			b.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
 			return true;
 		}
 		return false;
 	}
 
-	//Checks outfit to see if player is Nightwing
-	boolean isNightwing(Player p){
-		//Get outfit
-		PlayerInventory inv = p.getInventory();
-		ItemStack h = inv.getHelmet();
-		ItemStack c = inv.getChestplate();
-		ItemStack l = inv.getLeggings();
-		ItemStack b = inv.getBoots();
-		if (h == null || c == null || l == null || b == null){
-			return false;
-		}
-
-		//Check outfit
+	//-----------------------//
+	//   OUTFIT: NIGHTWING   //
+	//-----------------------//
+	boolean isNightwing(ItemStack h, ItemStack c, ItemStack l, ItemStack b){
 		if(h.getType().equals(Material.SKULL_ITEM)
 				&& h.getItemMeta().getDisplayName().substring(11).equalsIgnoreCase("j3loodking")
 				&& c.getType().equals(Material.LEATHER_CHESTPLATE)
 				&& l.getType().equals(Material.LEATHER_LEGGINGS)
 				&& b.getType().equals(Material.LEATHER_BOOTS)
-				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 3361970
+				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 3361970 //lapis
 				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 3361970
 				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 3361970){
-			//Make (essentially) unbreakable
-			h.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			c.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			l.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
-			b.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+			return true;
+		}
+		return false;
+	}
+
+	//----------------------//
+	//   OUTFIT: SUPERMAN   //
+	//----------------------//
+	boolean isSuperman(ItemStack h, ItemStack c, ItemStack l, ItemStack b){
+		if(h.getType().equals(Material.SKULL_ITEM)
+				&& h.getItemMeta().getDisplayName().substring(11).equalsIgnoreCase("superman")
+				&& c.getType().equals(Material.LEATHER_CHESTPLATE)
+				&& l.getType().equals(Material.LEATHER_LEGGINGS)
+				&& b.getType().equals(Material.LEATHER_BOOTS)
+				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 3361970 //lapis
+				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 10040115 //rosered
+				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 10040115){
+			return true;
+		}
+		return false;
+	}
+
+	//--------------------------//
+	//   OUTFIT: GREENLANTERN   //
+	//--------------------------//
+	boolean isGreenlantern(ItemStack h, ItemStack c, ItemStack l, ItemStack b){
+		if(h.getType().equals(Material.SKULL_ITEM)
+				&& h.getItemMeta().getDisplayName().substring(11).equalsIgnoreCase("greenlantern")
+				&& c.getType().equals(Material.LEATHER_CHESTPLATE)
+				&& l.getType().equals(Material.LEATHER_LEGGINGS)
+				&& b.getType().equals(Material.LEATHER_BOOTS)
+				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 8375321 //lime
+				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 8375321
+				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 8375321){
+			return true;
+		}
+		return false;
+	}
+
+	//----------------------//
+	//   OUTFIT: THEJOKER   //
+	//----------------------//
+	boolean isThejoker(ItemStack h, ItemStack c, ItemStack l, ItemStack b){
+		if(h.getType().equals(Material.SKULL_ITEM)
+				&& h.getItemMeta().getDisplayName().substring(11).equalsIgnoreCase("the_killing_joke")
+				&& c.getType().equals(Material.LEATHER_CHESTPLATE)
+				&& l.getType().equals(Material.LEATHER_LEGGINGS)
+				&& b.getType().equals(Material.LEATHER_BOOTS)
+				&& ((LeatherArmorMeta) c.getItemMeta()).getColor().asRGB() == 8339378 //purple
+				&& ((LeatherArmorMeta) l.getItemMeta()).getColor().asRGB() == 8339378
+				&& ((LeatherArmorMeta) b.getItemMeta()).getColor().asRGB() == 8339378){
 			return true;
 		}
 		return false;
